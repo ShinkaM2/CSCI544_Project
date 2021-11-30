@@ -96,7 +96,7 @@ class Trie:
         mean_pos = (pos * almt_distr).sum(dim=-1)  # bs x tl
         mean_pos = torch.cat([get_zeros(bs, 1, requires_grad=False).fill_(-1.0), mean_pos],
                              dim=-1)
-        reg_weight = lost_lengths.float().view(-1, 1) - 1.0 - mean_pos[:, :-1]
+        reg_weight = lost_lengths.float().view(-1, 1) - 1.0 - mean_pos[:, :-2]
         reg_weight.clamp_(0.0, 1.0)
 #         print(mean_pos.shape)
 #         print(mean_pos)
@@ -104,7 +104,7 @@ class Trie:
 #         print(mean_pos[:, :-1].shape)
 # #         print(mean_pos[:, 1:])
 # #         print(mean_pos[:, :-1])
-        rel_pos = mean_pos[:, 1:] - mean_pos[:, :-1]  # bs x tl
+        rel_pos = mean_pos[:, 2:] - mean_pos[:, :-2]  # bs x tl
         rel_pos_diff = rel_pos - 1
         margin = rel_pos_diff != 0
         reg_loss = margin.float() * (rel_pos_diff ** 2)  # bs x tl
