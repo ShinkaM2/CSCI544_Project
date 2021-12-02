@@ -7,17 +7,14 @@ from nd.dataset.charset import PAD_ID, get_charset
 from nd.flow.edit_dist import compute_expected_edits
 from nd.flow.min_cost_flow import min_cost_flow
 from nd.magic_tensor.core import MagicTensor
-from torch.nn.functional import normalize
-
 
 from .lstm_state import LSTMState
 from .modules import (GlobalAttention, MultiLayerLSTMCell,
                       NormControlledResidual, UniversalCharEmbedding)
-#from .module_v2 import (GlobalAttention, MultiLayerLSTMCell,
-#                        NormControlledResidual, UniversalCharEmbedding)
 
+# from .modules_v2 import (GlobalAttention, MultiLayerLSTMCell,
+#                          NormControlledResidual, UniversalCharEmbedding)
 
-# +
 
 @use_arguments_as_properties('char_emb_dim', 'hidden_size', 'num_layers', 'dropout', 'universal_charset_size', 'lost_lang', 'known_lang', 'norms_or_ratios', 'control_mode', 'residual')
 class DecipherModel(nn.Module):
@@ -45,7 +42,7 @@ class DecipherModel(nn.Module):
         inp_enc = self.char_emb(id_seqs, self.lost_lang)  # bs x L x d
         # inp_enc = self.drop(inp_enc)
         bs = inp_enc.shape[0]
-        inp_packed = nn.utils.rnn.pack_padded_sequence(self.drop(inp_enc), lengths, batch_first=True)
+        inp_packed = nn.utils.rnn.pack_padded_sequence(self.drop(inp_enc), lengths.cpu(), batch_first=True)
         h = get_zeros(2 * self.num_layers, bs, self.hidden_size)  # NOTE bidirectional, therefore 2
         c = get_zeros(2 * self.num_layers, bs, self.hidden_size)
         h_s_packed, encoding = self.encoder(inp_packed, (h, c))
@@ -105,8 +102,6 @@ class DecipherModel(nn.Module):
         ret.valid_log_probs = MagicTensor(ret.valid_log_probs, batch.lost.words, batch.known.words)
         return ret
 
-
-# -
 
 @use_arguments_as_properties('n_similar')
 class DecipherModelWithFlow(DecipherModel):
